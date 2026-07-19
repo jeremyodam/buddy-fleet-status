@@ -42,7 +42,12 @@ const APPS = [
       if (u.startsWith(origin) || u.startsWith('data:')) route.continue();
       else route.abort();
     });
-    page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    page.on('console', m => {
+      if (m.type() !== 'error') return;
+      // Browser-generated resource messages are the echo of OUR third-party aborts.
+      if (/Failed to load resource/.test(m.text())) return;
+      consoleErrors.push(m.text());
+    });
     page.on('pageerror', e => pageErrors.push(String(e)));
     page.on('requestfailed', r => {
       if (r.url().startsWith(origin) && r.failure() && r.failure().errorText !== 'net::ERR_ABORTED')
@@ -53,9 +58,12 @@ const APPS = [
     try {
       const resp = await page.goto(app.url, { timeout: 30000, waitUntil: 'domcontentloaded' });
       checks.loads = !!resp && resp.ok();
-      await page.waitForTimeout(app.bootWait);
-      const text = await page.evaluate(() => document.body.innerText.trim());
-      checks.renders = text.length > 100;                 // coarse on purpose: shell visible, not deep flows
+      // Poll for a rendered shell (boot splashes vary per app) rather than racing a
+      // fixed wait. Coarse on purpose: shell visible, not deep flows.
+      checks.renders = await page.waitForFunction(
+        () => document.body.innerText.trim().length > 100, null, { timeout: 15000 }
+      ).then(() => true).catch(() => false);
+      await page.waitForTimeout(1500);   // let late console errors land before judging
       checks.consoleClean = consoleErrors.length === 0;
       checks.noPageErrors = pageErrors.length === 0;
       checks.requestsOk = failedFirstParty.length === 0;
