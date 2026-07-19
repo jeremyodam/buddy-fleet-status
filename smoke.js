@@ -39,7 +39,11 @@ const APPS = [
     // abort every third-party request -- no analytics, no Apple, no fonts, nothing
     await page.route('**/*', route => {
       const u = route.request().url();
-      if (u.startsWith(origin) || u.startsWith('data:')) route.continue();
+      // First-party and static-asset CDNs pass (GarageBuddy compiles JSX via a CDN
+      // Babel at runtime -- a real user loads it, so the smoke must too). Every API
+      // origin still gets aborted: the Apple rate-limit lesson is permanent.
+      const cdnOk = /^https:\/\/(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\//.test(u);
+      if (u.startsWith(origin) || u.startsWith('data:') || cdnOk) route.continue();
       else route.abort();
     });
     page.on('console', m => {
