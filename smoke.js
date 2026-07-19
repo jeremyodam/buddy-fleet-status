@@ -25,6 +25,7 @@ const APPS = [
 ];
 
 (async () => {
+  fs.mkdirSync(path.join(__dirname, 'status'), { recursive: true });   // git does not track empty dirs
   const browser = await chromium.launch();
   let anyFail = false;
 
