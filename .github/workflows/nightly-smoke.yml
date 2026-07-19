@@ -1,0 +1,44 @@
+name: nightly-smoke
+
+# Odd-minute cron on purpose: GitHub delays or drops top-of-hour crons when the
+# queue spikes. 11:23 UTC is ~3:23 AM Pacific.
+on:
+  schedule:
+    - cron: '23 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          npm install playwright --no-save
+          npx playwright install chromium --with-deps
+
+      - name: Run fleet smoke
+        run: node smoke.js
+
+      # Committing the status files is also what keeps this repo "active" so
+      # GitHub's 60-day cron auto-disable never silently kills the nightly.
+      - name: Commit status
+        run: |
+          git config user.name "fleet-smoke-bot"
+          git config user.email "jeremyodam@gmail.com"
+          git add status/
+          git diff --cached --quiet || git commit -m "nightly smoke $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
