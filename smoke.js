@@ -10,7 +10,7 @@
  * page-load per app, against Vercel's CDN, from GitHub's runners.
  *
  * One sequential job, no matrix: matrix jobs racing to commit status JSONs to the
- * same branch lose to each other. Five apps at ~20s each is fine in series.
+ * same branch lose to each other. Six apps at ~20s each is fine in series.
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -22,6 +22,13 @@ const APPS = [
   { id: 'poolandspa', url: 'https://poolandspabuddy.vercel.app/', bootWait: 5000 },
   { id: 'ductly', url: 'https://ductly-nu.vercel.app/', bootWait: 5000 },
   { id: 'bedtime', url: 'https://grandpas-bedtime-stories.vercel.app/', bootWait: 5000 },
+  // 2026-09-13: LawnBuddy on its owned subdomain (ops-tools, middleware rewrites / to
+  // lawn.html). Calls Open-Meteo, phzmapi, zippopotam and Google Fonts at load; all
+  // but fonts get aborted here and the page boots on its sample curve + offline guide.
+  // `key` is optional: the coarse text check below passes on ANY page with prose,
+  // including the marketing index this host would fall back to if the rewrite
+  // broke, so an app on a shared project names the one element that proves it's it.
+  { id: 'lawnbuddy', url: 'https://lawn.odamsolutions.com/', bootWait: 5000, key: '.mast-name', keyText: 'LawnBuddy' },
 ];
 
 (async () => {
@@ -67,6 +74,12 @@ const APPS = [
       checks.renders = await page.waitForFunction(
         () => document.body.innerText.trim().length > 100, null, { timeout: 15000 }
       ).then(() => true).catch(() => false);
+      if (checks.renders && app.key) {
+        checks.renders = await page.waitForSelector(app.key, { state: 'visible', timeout: 5000 })
+          .then(el => el.innerText())
+          .then(t => !app.keyText || t.includes(app.keyText))
+          .catch(() => false);
+      }
       await page.waitForTimeout(1500);   // let late console errors land before judging
       checks.consoleClean = consoleErrors.length === 0;
       checks.noPageErrors = pageErrors.length === 0;
