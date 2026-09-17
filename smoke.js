@@ -29,6 +29,9 @@ const APPS = [
   // including the marketing index this host would fall back to if the rewrite
   // broke, so an app on a shared project names the one element that proves it's it.
   { id: 'lawnbuddy', url: 'https://lawn.odamsolutions.com/', bootWait: 5000, key: '.mast-name', keyText: 'LawnBuddy' },
+  // 2026-09-16: HomesteadBuddy, same shared project and rewrite pattern; loads Google Fonts
+  // only, boots offline on the drawn hub and the built-in guide.
+  { id: 'homesteadbuddy', url: 'https://homestead.odamsolutions.com/', bootWait: 5000, key: '.mast-name', keyText: 'HomesteadBuddy' },
 ];
 
 (async () => {
