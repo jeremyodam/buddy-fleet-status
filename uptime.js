@@ -64,6 +64,13 @@ async function sms(text) {
 }
 
 (async () => {
+  // Manual "does the phone actually buzz" check, fired from the Actions tab.
+  if (process.env.TEST_ALERT === 'true') {
+    const r = await sms('[uptime TEST] Alert path works: GitHub -> relay -> your phone. No outage.');
+    console.log(r);
+    process.exit(r.startsWith('sms ') && !r.includes('FAILED') ? 0 : 1);
+  }
+
   const now = Date.now();
   let prev = {};
   try { prev = JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch {}

@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      test_alert:
+        description: 'Send a tagged test SMS instead of checking'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -37,6 +42,7 @@ jobs:
           UPTIME_HOSTS: ${{ secrets.UPTIME_HOSTS }}
           SMS_RELAY_TOKEN: ${{ secrets.SMS_RELAY_TOKEN }}
           SMS_TO: ${{ secrets.SMS_TO }}
+          TEST_ALERT: ${{ inputs.test_alert }}
         run: node uptime.js
 
       - name: Save state
