@@ -19,8 +19,13 @@ const path = require('path');
 const APPS = [
   { id: 'guitarbuddy', url: 'https://guitarbuddy-app.vercel.app/', bootWait: 7000 },
   { id: 'garagebuddy', url: 'https://garagebuddy-app.vercel.app/', bootWait: 6000 },
-  { id: 'poolandspa', url: 'https://poolandspabuddy.vercel.app/', bootWait: 5000 },
-  { id: 'ductly', url: 'https://ductly-nu.vercel.app/', bootWait: 5000 },
+  // 2026-09-25: Pool & Spa and Ductly moved to the hosts real users hit. The Play
+  // Store shell loads pool.odamsolutions.com (ops-tools), so the old vercel.app URL
+  // was checking a deploy no customer ever sees.
+  { id: 'poolandspa', url: 'https://pool.odamsolutions.com/', bootWait: 5000, key: '.mast-name', keyText: 'Pool & Spa Buddy' },
+  { id: 'ductly', url: 'https://ductly.odamsolutions.com/', bootWait: 5000, key: '.mast-name', keyText: 'Ductly' },
+  // 2026-09-25: SproutBuddy, live on Google Play since 9/24 and never watched until now.
+  { id: 'sproutbuddy', url: 'https://sprout.odamsolutions.com/', bootWait: 5000 },
   { id: 'bedtime', url: 'https://grandpas-bedtime-stories.vercel.app/', bootWait: 5000 },
   // 2026-09-13: LawnBuddy on its owned subdomain (ops-tools, middleware rewrites / to
   // lawn.html). Calls Open-Meteo, phzmapi, zippopotam and Google Fonts at load; all

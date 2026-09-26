@@ -1,0 +1,47 @@
+name: uptime
+
+# Odd minute on purpose, same reason as nightly-smoke. Public repo, so
+# Actions minutes are free. Host list and state are private (secret + cache).
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  uptime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Restore last state
+        uses: actions/cache/restore@v4
+        with:
+          path: .uptime-state.json
+          key: uptime-state-${{ github.run_id }}
+          restore-keys: uptime-state-
+
+      - name: Check every live domain
+        env:
+          UPTIME_HOSTS: ${{ secrets.UPTIME_HOSTS }}
+          SMS_RELAY_TOKEN: ${{ secrets.SMS_RELAY_TOKEN }}
+          SMS_TO: ${{ secrets.SMS_TO }}
+        run: node uptime.js
+
+      - name: Save state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .uptime-state.json
+          key: uptime-state-${{ github.run_id }}
