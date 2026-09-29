@@ -14,7 +14,12 @@ const fs = require('fs');
 
 const STATE = '.uptime-state.json';
 const REMIND_MS = 6 * 60 * 60 * 1000;
-const hosts = (process.env.UPTIME_HOSTS || '').split(/\s+/).filter(Boolean);
+// Public hosts that must ALWAYS be probed, whatever the secret list holds (2026-09-28: the
+// company site went in front of friends, family and coworkers; its check can't depend on
+// someone remembering to add it to the secret). Only public, non-sensitive hosts belong here.
+const ALWAYS = ['odamsolutions.com'];
+const hosts = [...new Set([...ALWAYS, ...(process.env.UPTIME_HOSTS || '').split(/\s+/).filter(Boolean)]
+  .map(h => h.replace(/^https?:\/\//, '').replace(/\/$/, '')))];
 
 if (!hosts.length) {
   console.error('UPTIME_HOSTS is empty; refusing to report green on nothing.');
